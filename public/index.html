@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Herbalife Stock Manager</title>
+  <style>
+    :root {
+      --primary: #e8480c;
+      --primary-dk: #c73a09;
+      --primary-lt: #fff0eb;
+      --green: #16a34a;
+      --red: #dc2626;
+      --yellow: #d97706;
+      --blue: #2563eb;
+      --bg: #f1f5f9;
+      --card: #fff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --muted: #64748b;
+      --sw: 250px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: var(--sw);
+      background: #0f172a;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 100;
+      overflow-y: auto;
+    }
+
+    .logo {
+      padding: 20px 18px 16px;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .logo h2 {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .logo p {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .nav-group {
+      padding: 14px 10px 4px;
+      font-size: 10px;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      font-weight: 600;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border-radius: 8px;
+      margin: 1px 6px;
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 500;
+      transition: .15s;
+      user-select: none;
+    }
+
+    .nav-item:hover {
+      background: #1e293b;
+      color: #e2e8f0;
+    }
+
+    .nav-item.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .nav-item svg {
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: #dc2626;
+      color: #fff;
+      font-size: 10px;
+      padding: 1px 7px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+
+    .admin-only {
+      display: none;
+    }
+
+    .main {
+      margin-left: var(--sw);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar h1 {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chip {
+      background: var(--primary-lt);
+      color: var(--primary);
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .chip.green {
+      background: #dcfce7;
+      color: var(--green);
+    }
+
+    /* USER MENU */
+    .user-menu-wrap {
+      position: relative;
+    }
+
+    .user-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      background: #fff;
+      transition: .15s;
+    }
+
+    .user-btn:hover {
+      border-color: var(--primary);
+      background: var(--primary-lt);
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .user-btn .uname {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .user-btn .urole {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .dropdown {
+      position: absolute;
+      top: calc(100%+8px);
+      right: 0;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .12);
+      min-width: 200px;
+      z-index: 200;
+      display: none;
+      overflow: hidden;
+    }
+
+    .dropdown.show {
+      display: block;
+    }
+
+    .dd-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: #f8fafc;
+    }
+
+    .dd-header .dd-name {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .dd-header .dd-email {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .dd-header .dd-role {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+
+    .dd-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text);
+      transition: .15s;
+    }
+
+    .dd-item:hover {
+      background: #f8fafc;
+    }
+
+    .dd-item svg {
+      width: 15px;
+      height: 15px;
+      color: var(--muted);
+    }
+
+    .dd-item.danger {
+      color: var(--red);
+    }
+
+    .dd-divider {
+      border-top: 1px solid var(--border);
+    }
+
+    .content {
+      padding: 22px 28px;
+      flex: 1;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+    }
+
+    .stat-card.orange::before {
+      background: var(--primary);
+    }
+
+    .stat-card.green::before {
+      background: var(--green);
+    }
+
+    .stat-card.red::before {
+      background: var(--red);
+    }
+
+    .stat-card.yellow::before {
+      background: var(--yellow);
+    }
+
+    .stat-card.blue::before {
+      background: var(--blue);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 4px 0 2px;
+    }
+
+    .stat-card.orange .stat-value {
+      color: var(--primary);
+    }
+
+    .stat-card.green .stat-value {
+      color: var(--green);
+    }
+
+    .stat-card.red .stat-value {
+      color: var(--red);
+    }
+
+    .stat-card.yellow .stat-value {
+      color: var(--yellow);
+    }
+
+    .stat-card.blue .stat-value {
+      color: var(--blue);
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .card-hd {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tbl-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f8fafc;
+      color: var(--muted);
+      font-weight: 600;
+      text-align: left;
+      padding: 9px 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      border-bottom: 2px solid var(--border);
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: #fafbfc;
+    }
+
+    .cat-cell {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
+    .tag-add {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .tag-sell {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .tag-center {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .tag-retail {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .tag-admin {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .tag-staff {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .pill {
+      display: inline-flex;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .pill-ok {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .pill-low {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .pill-out {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .bar-name {
+      font-size: 12px;
+      color: var(--muted);
+      width: 170px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 0;
+    }
+
+    .bar-track {
+      flex: 1;
+      background: #f1f5f9;
+      border-radius: 4px;
+      height: 9px;
+    }
+
+    .bar-fill {
+      background: var(--primary);
+      height: 9px;
+      border-radius: 4px;
+      transition: .6s;
+    }
+
+    .bar-val {
+      font-size: 12px;
+      font-weight: 700;
+      min-width: 28px;
+      text-align: right;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .fg {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .fg label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    select,
+    input[type=text],
+    input[type=number],
+    input[type=date],
+    input[type=password],
+    input[type=email] {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 13.5px;
+      color: var(--text);
+      width: 100%;
+      background: #fff;
+      transition: .15s;
+    }
+
+    select:focus,
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-lt);
+    }
+
+    input[readonly] {
+      background: #f8fafc;
+      color: var(--muted);
+    }
+
+    .full {
+      grid-column: 1/-1;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-green {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .btn-green:hover {
+      background: #15803d;
+    }
+
+    .btn-red {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .btn-red:hover {
+      background: #b91c1c;
+    }
+
+    .btn-orange {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-orange:hover {
+      background: var(--primary-dk);
+    }
+
+    .btn-ghost {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-ghost:hover {
+      background: #f8fafc;
+    }
+
+    .btn-sm {
+      padding: 5px 12px;
+      font-size: 12px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-bar select,
+    .filter-bar input {
+      max-width: 200px;
+    }
+
+    .result-box {
+      border-radius: 8px;
+      padding: 13px 16px;
+      font-size: 13px;
+      margin-top: 14px;
+    }
+
+    .result-box.success {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .result-box.error {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn .2s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px)
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 500;
+      z-index: 9999;
+      opacity: 0;
+      transition: .3s;
+      pointer-events: none;
+      max-width: 320px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, .15);
+    }
+
+    #toast.show {
+      opacity: 1;
+    }
+
+    #toast.ok {
+      background: #1e293b;
+      color: #fff;
+      border-left: 4px solid var(--green);
+    }
+
+    #toast.err {
+      background: #1e293b;
+      color: #fff;
+      border-left: 4px solid var(--red);
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 28px;
+      font-size: 13px;
+    }
+
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .5);
+      z-index: 300;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-bg.show {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px;
+      width: 420px;
+      max-width: 95vw;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    @media(max-width:860px) {
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🌿</div>
+      <div>
+        <h2>Herbalife</h2>
+        <p>Stock Manager</p>
+      </div>
+    </div>
+    <div class="nav-group">Main</div>
+    <div class="nav-item active" onclick="go('dashboard')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+      </svg>Dashboard
+    </div>
+    <div class="nav-item" onclick="go('inventory')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>Inventory
+    </div>
+    <div class="nav-group">Stock</div>
+    <div class="nav-item" onclick="go('add')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+      </svg>Add Stock
+    </div>
+    <div class="nav-item" onclick="go('sell')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>Sell Stock
+    </div>
+    <div class="nav-group">Reports</div>
+    <div class="nav-item" onclick="go('transactions')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg>Transactions
+    </div>
+    <div class="nav-item" onclick="go('alerts')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>Low Stock Alerts
+      <span class="nav-badge" id="alert-badge" style="display:none">0</span>
+    </div>
+    <div class="nav-group admin-only">Admin</div>
+    <div class="nav-item admin-only" onclick="go('users')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>Manage Users
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <h1 id="page-title">Dashboard</h1>
+      <div class="topbar-right">
+        <span class="chip green">● MySQL</span>
+        <span class="chip" id="top-date"></span>
+        <div class="user-menu-wrap">
+          <div class="user-btn" onclick="toggleDD()">
+            <div class="avatar" id="user-avatar">?</div>
+            <div>
+              <div class="uname" id="user-name">Loading…</div>
+              <div class="urole" id="user-role"></div>
+            </div>
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          <div class="dropdown" id="user-dd">
+            <div class="dd-header">
+              <div class="dd-name" id="dd-name">—</div>
+              <div class="dd-email" id="dd-email">—</div>
+              <span class="dd-role" id="dd-role-badge">—</span>
+            </div>
+            <div class="dd-item" onclick="openChangePwd()">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+              Change Password
+            </div>
+            <div class="dd-divider"></div>
+            <div class="dd-item danger" onclick="logout()">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Sign Out
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- DASHBOARD -->
+      <div id="pg-dashboard" class="page active">
+        <div class="stat-grid" id="stat-grid"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-hd">Stock by Category</div>
+            <div id="cat-bars"></div>
+          </div>
+          <div class="card">
+            <div class="card-hd">Recent Transactions</div>
+            <div class="tbl-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Type</th>
+                    <th>Qty</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-tx"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVENTORY -->
+      <div id="pg-inventory" class="page">
+        <div class="filter-bar">
+          <input type="text" id="inv-q" placeholder="🔍 Search…" oninput="renderInv()" />
+          <select id="inv-cat" onchange="renderInv()">
+            <option value="">All Categories</option>
+          </select>
+          <select id="inv-stock" onchange="renderInv()">
+            <option value="">All Levels</option>
+            <option value="ok">In Stock</option>
+            <option value="low">Low (≤5)</option>
+            <option value="out">Out of Stock</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Product</th>
+                  <th>Stock</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="inv-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADD STOCK -->
+      <div id="pg-add" class="page">
+        <div class="two-col">
+          <div class="card">
+            <div class="card-hd">➕ Add Stock</div>
+            <div class="form-grid">
+              <div class="fg full"><label>Category</label><select id="add-cat" onchange="fillAddProds()">
+                  <option value="">— Select —</option>
+                </select></div>
+              <div class="fg full"><label>Product</label><select id="add-prod">
+                  <option value="">— Select —</option>
+                </select></div>
+              <div class="fg"><label>Quantity</label><input type="number" id="add-qty" min="1" placeholder="e.g. 10" />
+              </div>
+              <div class="fg"><label>Date</label><input type="date" id="add-date" /></div>
+              <div class="fg full"><label>Note</label><input type="text" id="add-note" placeholder="Optional note" />
+              </div>
+            </div>
+            <div class="btn-row"><button class="btn btn-green" onclick="doAdd()">✅ Add to Stock</button><button
+                class="btn btn-ghost" onclick="resetAdd()">Clear</button></div>
+            <div id="add-res"></div>
+          </div>
+          <div class="card">
+            <div class="card-hd">Recent Additions</div>
+            <div class="tbl-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Qty</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="add-recent"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SELL STOCK -->
+      <div id="pg-sell" class="page">
+        <div class="two-col">
+          <div class="card">
+            <div class="card-hd">🛒 Sell Stock</div>
+            <div class="form-grid">
+              <div class="fg full"><label>Category</label><select id="sell-cat" onchange="fillSellProds()">
+                  <option value="">— Select —</option>
+                </select></div>
+              <div class="fg full"><label>Product</label><select id="sell-prod" onchange="showAvail()">
+                  <option value="">— Select —</option>
+                </select></div>
+              <div class="fg"><label>Available Stock</label><input type="text" id="sell-avail" readonly
+                  placeholder="—" /></div>
+              <div class="fg"><label>Quantity</label><input type="number" id="sell-qty" min="1" placeholder="e.g. 2" />
+              </div>
+              <div class="fg"><label>Sale Type</label><select id="sell-type">
+                  <option value="CENTER">CENTER</option>
+                  <option value="RETAIL">RETAIL</option>
+                  <option value="PERSONAL">PERSONAL</option>
+                </select></div>
+              <div class="fg"><label>Date</label><input type="date" id="sell-date" /></div>
+              <div class="fg full"><label>Note</label><input type="text" id="sell-note" placeholder="Optional note" />
+              </div>
+            </div>
+            <div class="btn-row"><button class="btn btn-red" onclick="doSell()">💸 Confirm Sale</button><button
+                class="btn btn-ghost" onclick="resetSell()">Clear</button></div>
+            <div id="sell-res"></div>
+          </div>
+          <div class="card">
+            <div class="card-hd">Recent Sales</div>
+            <div class="tbl-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Type</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="sell-recent"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSACTIONS -->
+      <div id="pg-transactions" class="page">
+        <div class="filter-bar">
+          <select id="tx-type" onchange="loadTx()">
+            <option value="">All Types</option>
+            <option value="ADD">Add</option>
+            <option value="SELL">Sell</option>
+          </select>
+          <input type="date" id="tx-from" onchange="loadTx()" />
+          <span style="font-size:13px;color:var(--muted)">to</span>
+          <input type="date" id="tx-to" onchange="loadTx()" />
+          <button class="btn btn-ghost btn-sm" onclick="clearTxF()">✕ Clear</button>
+          <span id="tx-count" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+        <div class="card">
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Category</th>
+                  <th>Product</th>
+                  <th>Type</th>
+                  <th>Qty</th>
+                  <th>Sale Type</th>
+                  <th>Note</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="tx-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALERTS -->
+      <div id="pg-alerts" class="page">
+        <div class="card">
+          <div class="card-hd">⚠️ Low Stock & Out of Stock</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Product</th>
+                  <th>Stock</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="alert-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS (admin only) -->
+      <div id="pg-users" class="page">
+        <div class="card">
+          <div class="card-hd">👥 User Management
+            <button class="btn btn-orange btn-sm" onclick="openAddUser()">+ Add User</button>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHANGE PASSWORD MODAL -->
+  <div class="modal-bg" id="pwd-modal">
+    <div class="modal">
+      <div class="modal-title">🔑 Change Password <button class="modal-close" onclick="closePwdModal()">×</button></div>
+      <div class="fg" style="margin-bottom:14px"><label>Current Password</label><input type="password" id="pwd-current"
+          placeholder="••••••" /></div>
+      <div class="fg" style="margin-bottom:14px"><label>New Password</label><input type="password" id="pwd-new"
+          placeholder="Min. 6 characters" /></div>
+      <div class="fg" style="margin-bottom:18px"><label>Confirm New Password</label><input type="password"
+          id="pwd-confirm" placeholder="Repeat new password" /></div>
+      <div id="pwd-msg"></div>
+      <div class="btn-row"><button class="btn btn-orange" onclick="doChangePwd()">Update Password</button><button
+          class="btn btn-ghost" onclick="closePwdModal()">Cancel</button></div>
+    </div>
+  </div>
+
+  <!-- ADD USER MODAL -->
+  <div class="modal-bg" id="user-modal">
+    <div class="modal">
+      <div class="modal-title" id="user-modal-title">Add New User <button class="modal-close"
+          onclick="closeUserModal()">×</button></div>
+      <div class="form-grid">
+        <div class="fg full"><label>Full Name</label><input type="text" id="u-name" placeholder="John Doe" /></div>
+        <div class="fg full"><label>Email</label><input type="email" id="u-email" placeholder="john@example.com" />
+        </div>
+        <div class="fg"><label>Password</label><input type="password" id="u-pass" placeholder="Min. 6 characters" />
+        </div>
+        <div class="fg"><label>Role</label><select id="u-role">
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+          </select></div>
+      </div>
+      <div id="user-msg" style="margin-top:12px"></div>
+      <div class="btn-row"><button class="btn btn-orange" onclick="doAddUser()">Create User</button><button
+          class="btn btn-ghost" onclick="closeUserModal()">Cancel</button></div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script>
+    const API = 'http://localhost:3000/api';
+    let allProds = [], currentUser = null;
+    const pages = ['dashboard', 'inventory', 'add', 'sell', 'transactions', 'alerts', 'users'];
+    const titles = { dashboard: 'Dashboard', inventory: 'Inventory', add: 'Add Stock', sell: 'Sell Stock', transactions: 'Transactions', alerts: 'Low Stock Alerts', users: 'Manage Users' };
+
+    // ── AUTH HELPERS ──────────────────────────────────────────────────────────────
+    const getToken = () => localStorage.getItem('hl_token');
+    const getUser = () => JSON.parse(localStorage.getItem('hl_user') || 'null');
+
+    function authHeaders() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }; }
+
+    async function apiFetch(url, opts = {}) {
+      const res = await fetch(API + url, { ...opts, headers: { ...authHeaders(), ...(opts.headers || {}) } });
+      if (res.status === 401) { logout(); return null; }
+      return res;
+    }
+
+    function logout() { localStorage.removeItem('hl_token'); localStorage.removeItem('hl_user'); window.location.href = '/login.html'; }
+
+    // ── UTILS ─────────────────────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const td = () => new Date().toISOString().slice(0, 10);
+    const fmt = d => d ? String(d).slice(0, 10) : '—';
+
+    function toast(msg, type = 'ok') { const t = $('toast'); t.textContent = msg; t.className = 'show ' + type; clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 3200); }
+    function pill(s) { if (s === 0) return `<span class="pill pill-out">Out of Stock</span>`; if (s <= 5) return `<span class="pill pill-low">Low — ${s}</span>`; return `<span class="pill pill-ok">${s} in stock</span>`; }
+
+    // ── DROPDOWN ──────────────────────────────────────────────────────────────────
+    function toggleDD() { $('user-dd').classList.toggle('show'); }
+    document.addEventListener('click', e => { if (!e.target.closest('.user-menu-wrap')) $('user-dd').classList.remove('show'); });
+
+    // ── NAVIGATION ────────────────────────────────────────────────────────────────
+    function go(name) {
+      pages.forEach(p => { $('pg-' + p)?.classList.toggle('active', p === name); });
+      document.querySelectorAll('.nav-item').forEach((n, i) => n.classList.toggle('active', pages[i] === name));
+      $('page-title').textContent = titles[name];
+      $('user-dd').classList.remove('show');
+      if (name === 'dashboard') loadDash();
+      if (name === 'inventory') loadInv();
+      if (name === 'add') loadAddPage();
+      if (name === 'sell') loadSellPage();
+      if (name === 'transactions') loadTx();
+      if (name === 'alerts') loadAlerts();
+      if (name === 'users') loadUsers();
+    }
+
+    // ── INIT ──────────────────────────────────────────────────────────────────────
+    async function init() {
+      const token = getToken();
+      if (!token) { window.location.href = '/login.html'; return; }
+      currentUser = getUser();
+      if (!currentUser) { window.location.href = '/login.html'; return; }
+
+      // Populate topbar user info
+      $('top-date').textContent = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      $('user-name').textContent = currentUser.name;
+      $('user-role').textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+      $('user-avatar').textContent = currentUser.name.charAt(0).toUpperCase();
+      $('dd-name').textContent = currentUser.name;
+      $('dd-email').textContent = currentUser.email;
+      $('dd-role-badge').textContent = currentUser.role;
+      $('dd-role-badge').className = 'dd-role tag-' + currentUser.role;
+
+      // Show admin-only items
+      if (currentUser.role === 'admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+      }
+
+      document.querySelectorAll('input[type=date]').forEach(i => i.value = td());
+      allProds = await apiFetch('/products').then(r => r.json());
+      populateCatSelects();
+      loadDash();
+      refreshAlertBadge();
+    }
+
+    async function refreshAlertBadge() {
+      const r = await apiFetch('/products/low-stock');
+      if (!r) return;
+      const low = await r.json();
+      const b = $('alert-badge');
+      if (low.length) { b.textContent = low.length; b.style.display = ''; } else b.style.display = 'none';
+    }
+
+    // ── DASHBOARD ─────────────────────────────────────────────────────────────────
+    async function loadDash() {
+      const r = await apiFetch('/dashboard'); if (!r) return;
+      const d = await r.json();
+      $('stat-grid').innerHTML = `
+    <div class="stat-card orange"><div class="stat-label">Total Products</div><div class="stat-value">${d.totalProducts}</div><div class="stat-sub">Unique SKUs</div></div>
+    <div class="stat-card green"><div class="stat-label">Total Stock</div><div class="stat-value">${d.totalStock}</div><div class="stat-sub">All units combined</div></div>
+    <div class="stat-card yellow"><div class="stat-label">Low Stock</div><div class="stat-value">${d.lowStock}</div><div class="stat-sub">5 units or less</div></div>
+    <div class="stat-card red"><div class="stat-label">Out of Stock</div><div class="stat-value">${d.outOfStock}</div><div class="stat-sub">Needs restocking</div></div>
+    <div class="stat-card blue"><div class="stat-label">Added Today</div><div class="stat-value">${d.todayAdded}</div><div class="stat-sub">Units added</div></div>
+    <div class="stat-card orange"><div class="stat-label">Sold Today</div><div class="stat-value">${d.todaySold}</div><div class="stat-sub">Units sold</div></div>`;
+      const max = Math.max(...d.categoryStock.map(c => Number(c.total)), 1);
+      $('cat-bars').innerHTML = d.categoryStock.map(c => `
+    <div class="bar-row"><div class="bar-name" title="${c.category}">${c.category}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${(Number(c.total) / max * 100).toFixed(1)}%"></div></div>
+    <div class="bar-val">${c.total}</div></div>`).join('');
+      $('recent-tx').innerHTML = d.recentTx.length
+        ? d.recentTx.map(t => `<tr><td><b>${t.name}</b><div class="cat-cell">${t.category}</div></td>
+        <td><span class="tag tag-${t.type.toLowerCase()}">${t.type}</span></td>
+        <td><b>${t.quantity}</b></td><td>${fmt(t.date)}</td></tr>`).join('')
+        : `<tr><td colspan="4" class="empty">No transactions yet</td></tr>`;
+    }
+
+    // ── INVENTORY ─────────────────────────────────────────────────────────────────
+    function loadInv() {
+      const sel = $('inv-cat'); if (sel.options.length <= 1) {
+        [...new Set(allProds.map(p => p.category))].sort().forEach(c => sel.add(new Option(c, c)));
+      }
+      renderInv();
+    }
+    function renderInv() {
+      const q = $('inv-q').value.toLowerCase(), cat = $('inv-cat').value, lv = $('inv-stock').value;
+      let list = allProds.filter(p => {
+        if (cat && p.category !== cat) return false;
+        if (q && !p.name.toLowerCase().includes(q) && !p.category.toLowerCase().includes(q)) return false;
+        if (lv === 'ok' && !(p.stock > 5)) return false;
+        if (lv === 'low' && !(p.stock > 0 && p.stock <= 5)) return false;
+        if (lv === 'out' && p.stock !== 0) return false;
+        return true;
+      });
+      $('inv-tbody').innerHTML = list.length
+        ? list.map(p => `<tr><td class="cat-cell">${p.category}</td><td><b>${p.name}</b></td><td><b>${p.stock}</b></td>
+        <td>${pill(p.stock)}</td>
+        <td><button class="btn btn-green btn-sm" onclick="jumpAdd(${p.id})">＋ Add</button>
+        <button class="btn btn-red btn-sm" onclick="jumpSell(${p.id})" style="margin-left:4px">− Sell</button></td></tr>`).join('')
+        : `<tr><td colspan="5" class="empty">No products match filters</td></tr>`;
+    }
+    function jumpAdd(id) { const p = allProds.find(x => x.id === id); if (!p) return; go('add'); setTimeout(() => { $('add-cat').value = p.category; fillAddProds(); setTimeout(() => $('add-prod').value = id, 30); }, 50); }
+    function jumpSell(id) { const p = allProds.find(x => x.id === id); if (!p) return; go('sell'); setTimeout(() => { $('sell-cat').value = p.category; fillSellProds(); setTimeout(() => { $('sell-prod').value = id; showAvail(); }, 30); }, 50); }
+
+    // ── ADD ───────────────────────────────────────────────────────────────────────
+    function loadAddPage() { populateCatSelect('add-cat'); loadMiniTx('ADD', 'add-recent', ['name', 'category', 'quantity', 'date']); }
+    function fillAddProds() { const c = $('add-cat').value, s = $('add-prod'); s.innerHTML = '<option value="">— Select —</option>'; allProds.filter(p => !c || p.category === c).forEach(p => s.add(new Option(p.name, p.id))); }
+    async function doAdd() {
+      const pid = $('add-prod').value, qty = parseInt($('add-qty').value), note = $('add-note').value, date = $('add-date').value;
+      if (!pid) return toast('Select a product', 'err'); if (!qty || qty < 1) return toast('Enter valid quantity', 'err');
+      const r = await apiFetch('/stock/add', { method: 'POST', body: JSON.stringify({ product_id: pid, quantity: qty, note, date }) });
+      const data = await r.json(); if (!r.ok) return toast(data.error, 'err');
+      allProds = await apiFetch('/products').then(x => x.json());
+      const p = allProds.find(x => x.id == pid);
+      $('add-res').innerHTML = `<div class="result-box success">✅ Added <b>${qty}</b> units of <b>${p.name}</b>. New stock: <b>${p.stock}</b></div>`;
+      toast(`Added ${qty} × ${p.name}`); loadMiniTx('ADD', 'add-recent', ['name', 'category', 'quantity', 'date']); refreshAlertBadge();
+      $('add-qty').value = ''; $('add-note').value = '';
+    }
+    function resetAdd() { $('add-cat').value = ''; $('add-prod').innerHTML = '<option value="">— Select —</option>'; $('add-qty').value = ''; $('add-note').value = ''; $('add-date').value = td(); $('add-res').innerHTML = ''; }
+
+    // ── SELL ──────────────────────────────────────────────────────────────────────
+    function loadSellPage() { populateCatSelect('sell-cat'); loadMiniTx('SELL', 'sell-recent', ['name', 'quantity', 'sale_type', 'date']); }
+    function fillSellProds() { const c = $('sell-cat').value, s = $('sell-prod'); s.innerHTML = '<option value="">— Select —</option>'; allProds.filter(p => !c || p.category === c).forEach(p => s.add(new Option(`${p.name} (Stock: ${p.stock})`, p.id))); $('sell-avail').value = ''; }
+    function showAvail() { const p = allProds.find(x => x.id == $('sell-prod').value); $('sell-avail').value = p ? p.stock : ''; }
+    async function doSell() {
+      const pid = $('sell-prod').value, qty = parseInt($('sell-qty').value), st = $('sell-type').value, note = $('sell-note').value, date = $('sell-date').value;
+      if (!pid) return toast('Select a product', 'err'); if (!qty || qty < 1) return toast('Enter valid quantity', 'err');
+      const r = await apiFetch('/stock/sell', { method: 'POST', body: JSON.stringify({ product_id: pid, quantity: qty, sale_type: st, note, date }) });
+      const data = await r.json(); if (!r.ok) return toast(data.error, 'err');
+      allProds = await apiFetch('/products').then(x => x.json());
+      const p = allProds.find(x => x.id == pid);
+      $('sell-res').innerHTML = `<div class="result-box error">💸 Sold <b>${qty}</b> units of <b>${p.name}</b> (${st}). Remaining: <b>${p.stock}</b></div>`;
+      toast(`Sold ${qty} × ${p.name}`); loadMiniTx('SELL', 'sell-recent', ['name', 'quantity', 'sale_type', 'date']); refreshAlertBadge();
+      $('sell-qty').value = ''; $('sell-note').value = ''; $('sell-avail').value = '';
+    }
+    function resetSell() { $('sell-cat').value = ''; $('sell-prod').innerHTML = '<option value="">— Select —</option>'; $('sell-qty').value = ''; $('sell-note').value = ''; $('sell-avail').value = ''; $('sell-date').value = td(); $('sell-res').innerHTML = ''; }
+
+    // ── TRANSACTIONS ──────────────────────────────────────────────────────────────
+    async function loadTx() {
+      const type = $('tx-type').value, from = $('tx-from').value, to = $('tx-to').value;
+      let url = '/transactions?limit=200';
+      if (type) url += `&type=${type}`; if (from) url += `&from=${from}`; if (to) url += `&to=${to}`;
+      const r = await apiFetch(url); if (!r) return;
+      const txs = await r.json();
+      $('tx-count').textContent = `${txs.length} record${txs.length !== 1 ? 's' : ''}`;
+      $('tx-tbody').innerHTML = txs.length
+        ? txs.map((t, i) => `<tr><td style="color:var(--muted);font-size:12px">${i + 1}</td><td class="cat-cell">${t.category}</td>
+        <td><b>${t.name}</b></td><td><span class="tag tag-${t.type.toLowerCase()}">${t.type}</span></td>
+        <td><b>${t.quantity}</b></td>
+        <td>${t.sale_type ? `<span class="tag tag-${t.sale_type.toLowerCase()}">${t.sale_type}</span>` : '—'}</td>
+        <td>${t.note || '—'}</td><td>${fmt(t.date)}</td></tr>`).join('')
+        : `<tr><td colspan="8" class="empty">No transactions found</td></tr>`;
+    }
+    function clearTxF() { $('tx-type').value = ''; $('tx-from').value = ''; $('tx-to').value = ''; loadTx(); }
+
+    // ── ALERTS ────────────────────────────────────────────────────────────────────
+    async function loadAlerts() {
+      const r = await apiFetch('/products/low-stock'); if (!r) return;
+      const list = await r.json();
+      $('alert-tbody').innerHTML = list.length
+        ? list.map(p => `<tr><td class="cat-cell">${p.category}</td><td><b>${p.name}</b></td>
+        <td><b>${p.stock}</b></td><td>${pill(p.stock)}</td>
+        <td><button class="btn btn-green btn-sm" onclick="jumpAdd(${p.id})">Restock</button></td></tr>`).join('')
+        : `<tr><td colspan="5" class="empty">🎉 All products well stocked!</td></tr>`;
+    }
+
+    // ── USERS (admin) ─────────────────────────────────────────────────────────────
+    async function loadUsers() {
+      const r = await apiFetch('/users'); if (!r) return;
+      const users = await r.json();
+      $('users-tbody').innerHTML = users.length
+        ? users.map(u => `<tr>
+        <td><b>${u.name}</b></td><td>${u.email}</td>
+        <td><span class="tag tag-${u.role}">${u.role}</span></td>
+        <td>${u.active ? '<span class="pill pill-ok">Active</span>' : '<span class="pill pill-out">Inactive</span>'}</td>
+        <td style="font-size:12px;color:var(--muted)">${fmt(u.created_at)}</td>
+        <td>${u.id !== currentUser.id ? `<button class="btn btn-red btn-sm" onclick="deactivateUser(${u.id},'${u.name}')">Deactivate</button>` :
+            '<span style="font-size:11px;color:var(--muted)">You</span>'}</td></tr>`).join('')
+        : `<tr><td colspan="6" class="empty">No users found</td></tr>`;
+    }
+    function openAddUser() { $('user-modal').classList.add('show');['u-name', 'u-email', 'u-pass'].forEach(id => $(id).value = ''); $('u-role').value = 'staff'; $('user-msg').innerHTML = ''; }
+    function closeUserModal() { $('user-modal').classList.remove('show'); }
+    async function doAddUser() {
+      const name = $('u-name').value, email = $('u-email').value, password = $('u-pass').value, role = $('u-role').value;
+      if (!name || !email || !password) return $('user-msg').innerHTML = '<div class="result-box error">All fields required</div>';
+      const r = await apiFetch('/users', { method: 'POST', body: JSON.stringify({ name, email, password, role }) });
+      const data = await r.json(); if (!r.ok) return $('user-msg').innerHTML = `<div class="result-box error">${data.error}</div>`;
+      toast('User created successfully'); closeUserModal(); loadUsers();
+    }
+    async function deactivateUser(id, name) {
+      if (!confirm(`Deactivate user "${name}"?`)) return;
+      const r = await apiFetch(`/users/${id}`, { method: 'PUT', body: JSON.stringify({ active: 0, name, role: 'staff' }) });
+      if (r.ok) { toast(`${name} deactivated`); loadUsers(); }
+    }
+
+    // ── CHANGE PASSWORD ───────────────────────────────────────────────────────────
+    function openChangePwd() { $('pwd-modal').classList.add('show'); $('user-dd').classList.remove('show');['pwd-current', 'pwd-new', 'pwd-confirm'].forEach(id => $(id).value = ''); $('pwd-msg').innerHTML = ''; }
+    function closePwdModal() { $('pwd-modal').classList.remove('show'); }
+    async function doChangePwd() {
+      const current = $('pwd-current').value, newPass = $('pwd-new').value, confirm = $('pwd-confirm').value;
+      if (!current || !newPass) return $('pwd-msg').innerHTML = '<div class="result-box error">All fields required</div>';
+      if (newPass !== confirm) return $('pwd-msg').innerHTML = '<div class="result-box error">Passwords do not match</div>';
+      if (newPass.length < 6) return $('pwd-msg').innerHTML = '<div class="result-box error">Min. 6 characters required</div>';
+      const r = await apiFetch('/auth/change-password', { method: 'POST', body: JSON.stringify({ current, newPass }) });
+      const data = await r.json(); if (!r.ok) return $('pwd-msg').innerHTML = `<div class="result-box error">${data.error}</div>`;
+      toast('Password updated successfully'); closePwdModal();
+    }
+
+    // ── HELPERS ───────────────────────────────────────────────────────────────────
+    function populateCatSelects() { ['add-cat', 'sell-cat'].forEach(id => populateCatSelect(id)); }
+    function populateCatSelect(id) { const s = $(id); if (s.options.length > 1) return;[...new Set(allProds.map(p => p.category))].sort().forEach(c => s.add(new Option(c, c))); }
+    async function loadMiniTx(type, tbodyId, cols) {
+      const r = await apiFetch(`/transactions?type=${type}&limit=8`); if (!r) return;
+      const txs = await r.json(); const tbody = $(tbodyId); if (!tbody) return;
+      tbody.innerHTML = txs.length
+        ? txs.map(t => `<tr>
+        ${cols.includes('name') ? `<td><b>${t.name}</b></td>` : ''}
+        ${cols.includes('category') ? `<td class="cat-cell">${t.category}</td>` : ''}
+        ${cols.includes('quantity') ? `<td>${t.quantity}</td>` : ''}
+        ${cols.includes('sale_type') ? `<td>${t.sale_type ? `<span class="tag tag-${t.sale_type.toLowerCase()}">${t.sale_type}</span>` : '—'}</td>` : ''}
+        ${cols.includes('date') ? `<td>${fmt(t.date)}</td>` : ''}</tr>`).join('')
+        : `<tr><td colspan="${cols.length}" class="empty">No records yet</td></tr>`;
+    }
+
+    init();
+  </script>
+</body>
+
+</html>
