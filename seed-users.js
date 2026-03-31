@@ -1,52 +1,43 @@
 /**
- * seed-users.js  —  Add or update users in the SQLite database.
+ * seed-users.js  —  Add or update users in the Turso database.
  * Run with:  node seed-users.js
- *
- * The server must have been started at least once first so that
- * herbalife.db and the users table already exist.
+ * Requires TURSO_DB_URL and TURSO_DB_TOKEN in .env
  */
 
-const bcrypt   = require('bcryptjs');
-const Database = require('better-sqlite3');
-const path     = require('path');
+require('dotenv').config();
+const bcrypt = require('bcryptjs');
+const { createClient } = require('@libsql/client');
 
-// ── ADD YOUR USERS HERE ───────────────────────────────────────────────────────
 const users = [
   { name: 'Admin', email: 'admin@nag.com', password: 'admin123', role: 'admin' },
   { name: 'Staff', email: 'staff@nag.com', password: 'staff123', role: 'staff' },
-  // { name: 'Ravi',  email: 'ravi@nag.com',  password: 'ravi123',  role: 'staff' },
+  // { name: 'Ravi', email: 'ravi@nag.com', password: 'ravi123', role: 'staff' },
 ];
-// ─────────────────────────────────────────────────────────────────────────────
 
-const DB_PATH = path.join(__dirname, 'herbalife.db');
-const sqlite  = new Database(DB_PATH);
-sqlite.pragma('foreign_keys = ON');
+const db = createClient({
+  url:       process.env.TURSO_DB_URL,
+  authToken: process.env.TURSO_DB_TOKEN,
+});
 
-const upsert = sqlite.prepare(`
-  INSERT INTO users (name, email, password, role, active)
-  VALUES (?, ?, ?, ?, 1)
-  ON CONFLICT(email) DO UPDATE SET
-    name     = excluded.name,
-    password = excluded.password,
-    role     = excluded.role,
-    active   = 1
-`);
-
-console.log('\n── Herbalife User Seeder (SQLite) ──────────────');
-
-for (const u of users) {
-  const hash = bcrypt.hashSync(u.password, 10);
-  try {
-    upsert.run(u.name, u.email, hash, u.role);
-    console.log(`  ✅  ${u.role.padEnd(6)} | ${u.email} | password: ${u.password}`);
-  } catch (e) {
-    console.log(`  ❌  Failed for ${u.email}: ${e.message}`);
+async function run() {
+  console.log('\n── Herbalife User Seeder (Turso) ───────────────');
+  for (const u of users) {
+    const hash = bcrypt.hashSync(u.password, 10);
+    try {
+      await db.execute({
+        sql: `INSERT INTO users (name,email,password,role,active) VALUES (?,?,?,?,1)
+              ON CONFLICT(email) DO UPDATE SET name=excluded.name,password=excluded.password,role=excluded.role,active=1`,
+        args: [u.name, u.email, hash, u.role]
+      });
+      console.log(`  ✅  ${u.role.padEnd(6)} | ${u.email} | password: ${u.password}`);
+    } catch (e) {
+      console.log(`  ❌  Failed for ${u.email}: ${e.message}`);
+    }
   }
+  const res = await db.execute('SELECT id,name,email,role,active,created_at FROM users ORDER BY id');
+  console.log('\n── Users in Database ────────────────────────────');
+  console.table(res.rows);
+  db.close();
 }
 
-const rows = sqlite.prepare(
-  'SELECT id, name, email, role, active, created_at FROM users ORDER BY id'
-).all();
-console.log('\n── Users in Database ────────────────────────────');
-console.table(rows);
-sqlite.close();
+run();
