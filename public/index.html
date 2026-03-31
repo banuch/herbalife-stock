@@ -801,6 +801,71 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* ── BATCH ADD ROWS ─────────────────────────────────────────────────── */
+    .batch-row {
+      display: grid;
+      grid-template-columns: 1fr 90px 1fr 32px;
+      gap: 8px;
+      align-items: center;
+      background: #f8fafc;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      animation: fadeIn .18s ease;
+    }
+    .batch-row .prod-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .batch-row .prod-cat {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .batch-row input[type=number] {
+      text-align: center;
+      font-weight: 700;
+    }
+    .batch-row input[type=text].note-in {
+      font-size: 12.5px;
+    }
+    .batch-remove {
+      background: none;
+      border: none;
+      color: var(--red);
+      font-size: 18px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 6px;
+      transition: .15s;
+    }
+    .batch-remove:hover { background: #fee2e2; }
+    .add-search-item {
+      padding: 9px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f1f5f9;
+      transition: .12s;
+    }
+    .add-search-item:last-child { border-bottom: none; }
+    .add-search-item:hover { background: var(--primary-lt); }
+    .add-search-item .asi-cat { font-size: 11px; color: var(--muted); }
+    .add-search-item .asi-stock { font-size: 11px; font-weight: 700; color: var(--green); }
+    .batch-empty {
+      text-align: center;
+      padding: 20px;
+      color: var(--muted);
+      font-size: 13px;
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 
@@ -815,7 +880,7 @@
       </div>
     </div>
     <div class="nav-group">Main</div>
-    <div class="nav-item active" onclick="go('dashboard')">
+    <div class="nav-item active" data-page="dashboard" onclick="go('dashboard')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <rect x="3" y="3" width="7" height="7" rx="1" />
         <rect x="14" y="3" width="7" height="7" rx="1" />
@@ -823,32 +888,32 @@
         <rect x="14" y="14" width="7" height="7" rx="1" />
       </svg>Dashboard
     </div>
-    <div class="nav-item" onclick="go('inventory')">
+    <div class="nav-item" data-page="inventory" onclick="go('inventory')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round"
           d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
       </svg>Inventory
     </div>
     <div class="nav-group">Stock</div>
-    <div class="nav-item" onclick="go('add')">
+    <div class="nav-item" data-page="add" onclick="go('add')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
       </svg>Add Stock
     </div>
-    <div class="nav-item" onclick="go('sell')">
+    <div class="nav-item" data-page="sell" onclick="go('sell')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round"
           d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
       </svg>Sell Stock
     </div>
     <div class="nav-group">Reports</div>
-    <div class="nav-item" onclick="go('transactions')">
+    <div class="nav-item" data-page="transactions" onclick="go('transactions')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round"
           d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
       </svg>Transactions
     </div>
-    <div class="nav-item" onclick="go('alerts')">
+    <div class="nav-item" data-page="alerts" onclick="go('alerts')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round"
           d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -856,11 +921,16 @@
       <span class="nav-badge" id="alert-badge" style="display:none">0</span>
     </div>
     <div class="nav-group admin-only">Admin</div>
-    <div class="nav-item admin-only" onclick="go('users')">
+    <div class="nav-item admin-only" data-page="users" onclick="go('users')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round"
           d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
       </svg>Manage Users
+    </div>
+    <div class="nav-item admin-only" data-page="modal-addprod" onclick="openAddProduct()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>Add New Product
     </div>
   </nav>
 
@@ -869,7 +939,7 @@
     <div class="topbar">
       <h1 id="page-title">Dashboard</h1>
       <div class="topbar-right">
-        <span class="chip green">● MySQL</span>
+        <span class="chip green">● SQLite</span>
         <span class="chip" id="top-date"></span>
         <div class="user-menu-wrap">
           <div class="user-btn" onclick="toggleDD()">
@@ -972,24 +1042,35 @@
       <div id="pg-add" class="page">
         <div class="two-col">
           <div class="card">
-            <div class="card-hd">➕ Add Stock</div>
-            <div class="form-grid">
-              <div class="fg full"><label>Category</label><select id="add-cat" onchange="fillAddProds()">
-                  <option value="">— Select —</option>
-                </select></div>
-              <div class="fg full"><label>Product</label><select id="add-prod">
-                  <option value="">— Select —</option>
-                </select></div>
-              <div class="fg"><label>Quantity</label><input type="number" id="add-qty" min="1" placeholder="e.g. 10" />
-              </div>
-              <div class="fg"><label>Date</label><input type="date" id="add-date" /></div>
-              <div class="fg full"><label>Note</label><input type="text" id="add-note" placeholder="Optional note" />
+            <div class="card-hd">➕ Add Stock
+              <button class="btn btn-ghost btn-sm" onclick="addBatchRow()" style="font-size:12px">＋ Add Another Item</button>
+            </div>
+
+            <!-- Search bar -->
+            <div style="margin-bottom:14px;position:relative">
+              <input type="text" id="add-search" placeholder="🔍 Search product to add…" oninput="filterAddSearch()" autocomplete="off"
+                style="width:100%" />
+              <div id="add-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--primary);
+                border-top:none;border-radius:0 0 8px 8px;z-index:50;max-height:220px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.1)"></div>
+            </div>
+
+            <!-- Batch rows -->
+            <div id="add-batch-rows"></div>
+
+            <div style="margin-top:6px">
+              <div class="fg" style="max-width:220px">
+                <label>Date</label>
+                <input type="date" id="add-date" />
               </div>
             </div>
-            <div class="btn-row"><button class="btn btn-green" onclick="doAdd()">✅ Add to Stock</button><button
-                class="btn btn-ghost" onclick="resetAdd()">Clear</button></div>
-            <div id="add-res"></div>
+
+            <div class="btn-row">
+              <button class="btn btn-green" onclick="doAdd()">✅ Add to Stock</button>
+              <button class="btn btn-ghost" onclick="resetAdd()">Clear All</button>
+            </div>
+            <div id="add-res" style="margin-top:10px"></div>
           </div>
+
           <div class="card">
             <div class="card-hd">Recent Additions</div>
             <div class="tbl-wrap">
@@ -1177,6 +1258,64 @@
     </div>
   </div>
 
+  <!-- ADD PRODUCT MODAL -->
+  <div class="modal-bg" id="addprod-modal">
+    <div class="modal" style="width:480px">
+      <div class="modal-title">📦 Add New Product
+        <button class="modal-close" onclick="closeAddProduct()">×</button>
+      </div>
+
+      <!-- Tab toggle: existing category / new category -->
+      <div style="display:flex;gap:0;margin-bottom:18px;border:1.5px solid var(--border);border-radius:8px;overflow:hidden">
+        <button id="tab-existing" onclick="switchCatTab('existing')"
+          style="flex:1;padding:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:var(--primary);color:#fff;transition:.15s">
+          Existing Category
+        </button>
+        <button id="tab-new" onclick="switchCatTab('new')"
+          style="flex:1;padding:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:#f1f5f9;color:var(--muted);transition:.15s">
+          + New Category
+        </button>
+      </div>
+
+      <!-- Existing category -->
+      <div id="cat-existing-panel">
+        <div class="fg" style="margin-bottom:14px">
+          <label>Category</label>
+          <select id="ap-cat-select">
+            <option value="">— Select Category —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- New category -->
+      <div id="cat-new-panel" style="display:none">
+        <div class="fg" style="margin-bottom:14px">
+          <label>New Category Name</label>
+          <input type="text" id="ap-cat-new" placeholder="e.g. Skin Care" />
+        </div>
+      </div>
+
+      <div class="fg" style="margin-bottom:14px">
+        <label>Product Name</label>
+        <input type="text" id="ap-name" placeholder="e.g. Vanilla" />
+      </div>
+
+      <div class="fg" style="margin-bottom:18px">
+        <label>Initial Stock (optional)</label>
+        <input type="number" id="ap-stock" min="0" value="0" placeholder="0" />
+        <span style="font-size:11px;color:var(--muted);margin-top:3px">
+          If &gt; 0, an ADD transaction will be recorded automatically.
+        </span>
+      </div>
+
+      <div id="ap-msg"></div>
+      <div class="btn-row">
+        <button class="btn btn-orange" onclick="doAddProduct()">✅ Create Product</button>
+        <button class="btn btn-ghost" onclick="closeAddProduct()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast"></div>
   <script>
     const API = 'http://localhost:3000/api';
@@ -1213,7 +1352,9 @@
     // ── NAVIGATION ────────────────────────────────────────────────────────────────
     function go(name) {
       pages.forEach(p => { $('pg-' + p)?.classList.toggle('active', p === name); });
-      document.querySelectorAll('.nav-item').forEach((n, i) => n.classList.toggle('active', pages[i] === name));
+      document.querySelectorAll('.nav-item[data-page]').forEach(n => {
+        n.classList.toggle('active', n.dataset.page === name);
+      });
       $('page-title').textContent = titles[name];
       $('user-dd').classList.remove('show');
       if (name === 'dashboard') loadDash();
@@ -1244,7 +1385,9 @@
 
       // Show admin-only items
       if (currentUser.role === 'admin') {
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+        document.querySelectorAll('.admin-only').forEach(el => {
+          el.style.display = el.classList.contains('nav-item') ? 'flex' : '';
+        });
       }
 
       document.querySelectorAll('input[type=date]').forEach(i => i.value = td());
@@ -1309,24 +1452,130 @@
         <button class="btn btn-red btn-sm" onclick="jumpSell(${p.id})" style="margin-left:4px">− Sell</button></td></tr>`).join('')
         : `<tr><td colspan="5" class="empty">No products match filters</td></tr>`;
     }
-    function jumpAdd(id) { const p = allProds.find(x => x.id === id); if (!p) return; go('add'); setTimeout(() => { $('add-cat').value = p.category; fillAddProds(); setTimeout(() => $('add-prod').value = id, 30); }, 50); }
+    function jumpAdd(id) { const p = allProds.find(x => x.id === id); if (!p) return; go('add'); setTimeout(() => selectAddProd(id), 80); }
     function jumpSell(id) { const p = allProds.find(x => x.id === id); if (!p) return; go('sell'); setTimeout(() => { $('sell-cat').value = p.category; fillSellProds(); setTimeout(() => { $('sell-prod').value = id; showAvail(); }, 30); }, 50); }
 
-    // ── ADD ───────────────────────────────────────────────────────────────────────
-    function loadAddPage() { populateCatSelect('add-cat'); loadMiniTx('ADD', 'add-recent', ['name', 'category', 'quantity', 'date']); }
-    function fillAddProds() { const c = $('add-cat').value, s = $('add-prod'); s.innerHTML = '<option value="">— Select —</option>'; allProds.filter(p => !c || p.category === c).forEach(p => s.add(new Option(p.name, p.id))); }
-    async function doAdd() {
-      const pid = $('add-prod').value, qty = parseInt($('add-qty').value), note = $('add-note').value, date = $('add-date').value;
-      if (!pid) return toast('Select a product', 'err'); if (!qty || qty < 1) return toast('Enter valid quantity', 'err');
-      const r = await apiFetch('/stock/add', { method: 'POST', body: JSON.stringify({ product_id: pid, quantity: qty, note, date }) });
-      const data = await r.json(); if (!r.ok) return toast(data.error, 'err');
-      allProds = await apiFetch('/products').then(x => x.json());
-      const p = allProds.find(x => x.id == pid);
-      $('add-res').innerHTML = `<div class="result-box success">✅ Added <b>${qty}</b> units of <b>${p.name}</b>. New stock: <b>${p.stock}</b></div>`;
-      toast(`Added ${qty} × ${p.name}`); loadMiniTx('ADD', 'add-recent', ['name', 'category', 'quantity', 'date']); refreshAlertBadge();
-      $('add-qty').value = ''; $('add-note').value = '';
+    // ── ADD (batch with search) ───────────────────────────────────────────────────
+    let addBatch = []; // [{id, name, category, qty, note}]
+
+    function loadAddPage() {
+      renderAddBatch();
+      loadMiniTx('ADD', 'add-recent', ['name', 'category', 'quantity', 'date']);
+      $('add-search').value = '';
+      hideAddDropdown();
     }
-    function resetAdd() { $('add-cat').value = ''; $('add-prod').innerHTML = '<option value="">— Select —</option>'; $('add-qty').value = ''; $('add-note').value = ''; $('add-date').value = td(); $('add-res').innerHTML = ''; }
+
+    function filterAddSearch() {
+      const q = $('add-search').value.trim().toLowerCase();
+      const dd = $('add-dropdown');
+      if (!q) { dd.style.display = 'none'; return; }
+      const matches = allProds.filter(p =>
+        p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
+      ).slice(0, 12);
+      if (!matches.length) { dd.style.display = 'none'; return; }
+      dd.innerHTML = matches.map(p => `
+        <div class="add-search-item" onclick="selectAddProd(${p.id})">
+          <div><div>${p.name}</div><div class="asi-cat">${p.category}</div></div>
+          <span class="asi-stock">Stock: ${p.stock}</span>
+        </div>`).join('');
+      dd.style.display = 'block';
+    }
+
+    function hideAddDropdown() { $('add-dropdown').style.display = 'none'; }
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#add-search') && !e.target.closest('#add-dropdown')) hideAddDropdown();
+    });
+
+    function selectAddProd(id) {
+      const p = allProds.find(x => x.id === id);
+      if (!p) return;
+      if (addBatch.find(r => r.id === id)) { toast('Already in list — adjust the quantity below', 'err'); hideAddDropdown(); return; }
+      addBatch.push({ id: p.id, name: p.name, category: p.category, qty: 1, note: '' });
+      renderAddBatch();
+      $('add-search').value = '';
+      hideAddDropdown();
+    }
+
+    function addBatchRow() {
+      $('add-search').focus();
+      toast('Type a product name to search', 'ok');
+    }
+
+    function removeBatchRow(id) {
+      addBatch = addBatch.filter(r => r.id !== id);
+      renderAddBatch();
+    }
+
+    function renderAddBatch() {
+      const container = $('add-batch-rows');
+      if (!addBatch.length) {
+        container.innerHTML = '<div class="batch-empty">🔍 Search a product above to add items</div>';
+        return;
+      }
+      container.innerHTML = addBatch.map(r => `
+        <div class="batch-row" id="brow-${r.id}">
+          <div>
+            <div class="prod-name">${r.name}</div>
+            <div class="prod-cat">${r.category}</div>
+          </div>
+          <input type="number" min="1" value="${r.qty}" placeholder="Qty"
+            oninput="updateBatch(${r.id},'qty',this.value)" />
+          <input type="text" class="note-in" value="${r.note}" placeholder="Note (optional)"
+            oninput="updateBatch(${r.id},'note',this.value)" />
+          <button class="batch-remove" onclick="removeBatchRow(${r.id})" title="Remove">✕</button>
+        </div>`).join('');
+    }
+
+    function updateBatch(id, field, val) {
+      const row = addBatch.find(r => r.id === id);
+      if (!row) return;
+      row[field] = field === 'qty' ? parseInt(val) || 1 : val;
+    }
+
+    async function doAdd() {
+      if (!addBatch.length) return toast('Add at least one product', 'err');
+      const date = $('add-date').value;
+      const invalid = addBatch.find(r => !r.qty || r.qty < 1);
+      if (invalid) return toast(`Enter valid quantity for ${invalid.name}`, 'err');
+
+      let successCount = 0, errors = [];
+      for (const row of addBatch) {
+        const r = await apiFetch('/stock/add', {
+          method: 'POST',
+          body: JSON.stringify({ product_id: row.id, quantity: row.qty, note: row.note || null, date })
+        });
+        const data = await r.json();
+        if (!r.ok) errors.push(`${row.name}: ${data.error}`);
+        else successCount++;
+      }
+
+      allProds = await apiFetch('/products').then(x => x.json());
+      const resultParts = addBatch.map(r => {
+        const fresh = allProds.find(x => x.id === r.id);
+        return `<b>${r.qty}</b> × ${r.name} → Stock: <b>${fresh?.stock ?? '?'}</b>`;
+      });
+
+      if (errors.length) {
+        $('add-res').innerHTML = `<div class="result-box error">⚠️ ${errors.join('<br>')}</div>`;
+      } else {
+        $('add-res').innerHTML = `<div class="result-box success">✅ Added successfully:<br>${resultParts.join('<br>')}</div>`;
+        toast(`Added ${successCount} product${successCount > 1 ? 's' : ''} to stock`);
+        addBatch = [];
+        renderAddBatch();
+      }
+      loadMiniTx('ADD', 'add-recent', ['name', 'category', 'quantity', 'date']);
+      refreshAlertBadge();
+    }
+
+    function resetAdd() {
+      addBatch = [];
+      renderAddBatch();
+      $('add-search').value = '';
+      $('add-date').value = td();
+      $('add-res').innerHTML = '';
+      hideAddDropdown();
+    }
 
     // ── SELL ──────────────────────────────────────────────────────────────────────
     function loadSellPage() { populateCatSelect('sell-cat'); loadMiniTx('SELL', 'sell-recent', ['name', 'quantity', 'sale_type', 'date']); }
@@ -1417,7 +1666,7 @@
     }
 
     // ── HELPERS ───────────────────────────────────────────────────────────────────
-    function populateCatSelects() { ['add-cat', 'sell-cat'].forEach(id => populateCatSelect(id)); }
+    function populateCatSelects() { populateCatSelect('sell-cat'); }
     function populateCatSelect(id) { const s = $(id); if (s.options.length > 1) return;[...new Set(allProds.map(p => p.category))].sort().forEach(c => s.add(new Option(c, c))); }
     async function loadMiniTx(type, tbodyId, cols) {
       const r = await apiFetch(`/transactions?type=${type}&limit=8`); if (!r) return;
@@ -1430,6 +1679,80 @@
         ${cols.includes('sale_type') ? `<td>${t.sale_type ? `<span class="tag tag-${t.sale_type.toLowerCase()}">${t.sale_type}</span>` : '—'}</td>` : ''}
         ${cols.includes('date') ? `<td>${fmt(t.date)}</td>` : ''}</tr>`).join('')
         : `<tr><td colspan="${cols.length}" class="empty">No records yet</td></tr>`;
+    }
+
+    // ── ADD PRODUCT (admin) ───────────────────────────────────────────────────────
+    let apCatTab = 'existing';
+
+    async function openAddProduct() {
+      $('addprod-modal').classList.add('show');
+      $('ap-name').value = '';
+      $('ap-stock').value = '0';
+      $('ap-msg').innerHTML = '';
+      switchCatTab('existing');
+      // Populate category dropdown fresh
+      const r = await apiFetch('/categories');
+      if (!r) return;
+      const cats = await r.json();
+      const sel = $('ap-cat-select');
+      sel.innerHTML = '<option value="">— Select Category —</option>';
+      cats.forEach(c => sel.add(new Option(c.name, c.id)));
+      $('ap-cat-new').value = '';
+    }
+
+    function closeAddProduct() { $('addprod-modal').classList.remove('show'); }
+
+    function switchCatTab(tab) {
+      apCatTab = tab;
+      $('cat-existing-panel').style.display = tab === 'existing' ? '' : 'none';
+      $('cat-new-panel').style.display = tab === 'new' ? '' : 'none';
+      $('tab-existing').style.background = tab === 'existing' ? 'var(--primary)' : '#f1f5f9';
+      $('tab-existing').style.color = tab === 'existing' ? '#fff' : 'var(--muted)';
+      $('tab-new').style.background = tab === 'new' ? 'var(--primary)' : '#f1f5f9';
+      $('tab-new').style.color = tab === 'new' ? '#fff' : 'var(--muted)';
+    }
+
+    async function doAddProduct() {
+      const name = $('ap-name').value.trim();
+      const stock = parseInt($('ap-stock').value) || 0;
+      const msgEl = $('ap-msg');
+      msgEl.innerHTML = '';
+
+      if (!name) return msgEl.innerHTML = '<div class="result-box error">Product name is required</div>';
+
+      let category_id;
+
+      if (apCatTab === 'new') {
+        const newCatName = $('ap-cat-new').value.trim();
+        if (!newCatName) return msgEl.innerHTML = '<div class="result-box error">Enter a new category name</div>';
+        const rc = await apiFetch('/categories', { method: 'POST', body: JSON.stringify({ name: newCatName }) });
+        const dc = await rc.json();
+        if (!rc.ok) return msgEl.innerHTML = `<div class="result-box error">${dc.error}</div>`;
+        // Fetch updated categories to get the new id
+        const cats = await apiFetch('/categories').then(r => r.json());
+        const match = cats.find(c => c.name.toLowerCase() === newCatName.toLowerCase());
+        if (!match) return msgEl.innerHTML = '<div class="result-box error">Could not resolve new category ID</div>';
+        category_id = match.id;
+      } else {
+        category_id = $('ap-cat-select').value;
+        if (!category_id) return msgEl.innerHTML = '<div class="result-box error">Select a category</div>';
+      }
+
+      const r = await apiFetch('/products', {
+        method: 'POST',
+        body: JSON.stringify({ name, category_id, initial_stock: stock })
+      });
+      const data = await r.json();
+      if (!r.ok) return msgEl.innerHTML = `<div class="result-box error">${data.error}</div>`;
+
+      toast(`✅ "${data.product.name}" added to ${data.product.category}`);
+      // Refresh global product list
+      allProds = await apiFetch('/products').then(x => x.json());
+      populateCatSelects();
+      closeAddProduct();
+      refreshAlertBadge();
+      // If inventory page is open, refresh it
+      if ($('pg-inventory').classList.contains('active')) renderInv();
     }
 
     init();

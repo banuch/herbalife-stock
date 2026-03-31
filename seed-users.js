@@ -1,49 +1,52 @@
-require('dotenv').config();
-const bcrypt = require('bcryptjs');
-const mysql  = require('mysql2/promise');
+/**
+ * seed-users.js  —  Add or update users in the SQLite database.
+ * Run with:  node seed-users.js
+ *
+ * The server must have been started at least once first so that
+ * herbalife.db and the users table already exist.
+ */
 
-// ── ADD YOUR USERS HERE ───────────────────────────────────────
+const bcrypt   = require('bcryptjs');
+const Database = require('better-sqlite3');
+const path     = require('path');
+
+// ── ADD YOUR USERS HERE ───────────────────────────────────────────────────────
 const users = [
-  { name: 'Admin',  email: 'admin@herbalife.com', password: 'admin123', role: 'admin' },
-  { name: 'Staff',  email: 'staff@herbalife.com', password: 'staff123', role: 'staff' },
-  // Add more users below:
-  // { name: 'Ravi',  email: 'ravi@herbalife.com',  password: 'ravi123',  role: 'staff' },
+  { name: 'Admin', email: 'admin@nag.com', password: 'admin123', role: 'admin' },
+  { name: 'Staff', email: 'staff@nag.com', password: 'staff123', role: 'staff' },
+  // { name: 'Ravi',  email: 'ravi@nag.com',  password: 'ravi123',  role: 'staff' },
 ];
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
-async function run() {
-  const db = await mysql.createConnection({
-    host:     process.env.DB_HOST,
-    user:     process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
+const DB_PATH = path.join(__dirname, 'herbalife.db');
+const sqlite  = new Database(DB_PATH);
+sqlite.pragma('foreign_keys = ON');
 
-  console.log('\n── Herbalife User Seeder ──────────────────────');
+const upsert = sqlite.prepare(`
+  INSERT INTO users (name, email, password, role, active)
+  VALUES (?, ?, ?, ?, 1)
+  ON CONFLICT(email) DO UPDATE SET
+    name     = excluded.name,
+    password = excluded.password,
+    role     = excluded.role,
+    active   = 1
+`);
 
-  for (const u of users) {
-    const hash = await bcrypt.hash(u.password, 10);
-    try {
-      await db.execute(
-        `INSERT INTO users (name, email, password, role)
-         VALUES (?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE password=VALUES(password), role=VALUES(role), active=1`,
-        [u.name, u.email, hash, u.role]
-      );
-      console.log(`  ✅  ${u.role.padEnd(6)} | ${u.email} | password: ${u.password}`);
-    } catch (e) {
-      console.log(`  ❌  Failed for ${u.email}: ${e.message}`);
-    }
+console.log('\n── Herbalife User Seeder (SQLite) ──────────────');
+
+for (const u of users) {
+  const hash = bcrypt.hashSync(u.password, 10);
+  try {
+    upsert.run(u.name, u.email, hash, u.role);
+    console.log(`  ✅  ${u.role.padEnd(6)} | ${u.email} | password: ${u.password}`);
+  } catch (e) {
+    console.log(`  ❌  Failed for ${u.email}: ${e.message}`);
   }
-
-  // Show final users table
-  const [rows] = await db.execute(
-    'SELECT id, name, email, role, active, created_at FROM users ORDER BY id'
-  );
-  console.log('\n── Users in Database ──────────────────────────');
-  console.table(rows);
-
-  await db.end();
 }
 
-run();
+const rows = sqlite.prepare(
+  'SELECT id, name, email, role, active, created_at FROM users ORDER BY id'
+).all();
+console.log('\n── Users in Database ────────────────────────────');
+console.table(rows);
+sqlite.close();
